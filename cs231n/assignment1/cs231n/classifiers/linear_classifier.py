@@ -8,6 +8,15 @@ from cs231n.classifiers.softmax import *
 from past.builtins import xrange
 
 
+"""
+sgd
+
+for niter:
+  select batch
+  calculate loss, grad
+  w = w - grad
+"""
+
 class LinearClassifier(object):
 
     def __init__(self):
@@ -44,21 +53,9 @@ class LinearClassifier(object):
             X_batch = None
             y_batch = None
 
-            #########################################################################
-            # TODO:                                                                 #
-            # Sample batch_size elements from the training data and their           #
-            # corresponding labels to use in this round of gradient descent.        #
-            # Store the data in X_batch and their corresponding labels in           #
-            # y_batch; after sampling X_batch should have shape (batch_size, dim)   #
-            # and y_batch should have shape (batch_size,)                           #
-            #                                                                       #
-            # Hint: Use np.random.choice to generate indices. Sampling with         #
-            # replacement is faster than sampling without replacement.              #
-            #########################################################################
-            # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-            pass
-
+            idx = np.random.choice(np.arange(num_train), batch_size, replace=True)
+            X_batch = X[idx]
+            y_batch = y[idx]
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
             # evaluate loss and gradient
@@ -66,14 +63,7 @@ class LinearClassifier(object):
             loss_history.append(loss)
 
             # perform parameter update
-            #########################################################################
-            # TODO:                                                                 #
-            # Update the weights using the gradient and the learning rate.          #
-            #########################################################################
-            # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-            pass
-
+            self.W = self.W - learning_rate*grad
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
             if verbose and it % 100 == 0:
@@ -96,15 +86,9 @@ class LinearClassifier(object):
           class.
         """
         y_pred = np.zeros(X.shape[0])
-        ###########################################################################
-        # TODO:                                                                   #
-        # Implement this method. Store the predicted labels in y_pred.            #
-        ###########################################################################
-        # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-        pass
-
-        # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+        scores = X.dot(self.W)
+        num_test = X.shape[0]
+        y_pred = np.argmax(scores[np.arange(num_test), :], axis=1)
         return y_pred
 
     def loss(self, X_batch, y_batch, reg):
