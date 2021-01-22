@@ -22,42 +22,30 @@ def svm_loss_naive(W, X, y, reg):
     - gradient with respect to weights W; an array of same shape as W
     """
     dW = np.zeros(W.shape) # initialize the gradient as zero
-
-    # compute the loss and the gradient
-    num_classes = W.shape[1]
-    num_train = X.shape[0]
     loss = 0.0
-    for i in range(num_train):
+    # compute the loss and the gradient
+    N = X.shape[0]
+    C = W.shape[1]
+    for i in range(N):
         scores = X[i].dot(W)
-        correct_class_score = scores[y[i]]
-        for j in range(num_classes):
+        syi = scores[y[i]]
+        scores[y[i]] = 0
+        for j in range(C):
             if j == y[i]:
                 continue
-            margin = scores[j] - correct_class_score + 1 # note delta = 1
+            margin = np.maximum(0, scores[j] - syi + 1)
             if margin > 0:
                 loss += margin
+                dW[:, y[i]] -= X[i]
+                dW[:, j] += X[i]
 
-    # Right now the loss is a sum over all training examples, but we want it
-    # to be an average instead so we divide by num_train.
-    loss /= num_train
-
-    # Add regularization to the loss.
+    # mean 
+    loss /= N
+    dW /= N
+    # regularization
     loss += reg * np.sum(W * W)
+    dW += reg*W
 
-    #############################################################################
-    # TODO:                                                                     #
-    # Compute the gradient of the loss function and store it dW.                #
-    # Rather than first computing the loss and then computing the derivative,   #
-    # it may be simpler to compute the derivative at the same time that the     #
-    # loss is being computed. As a result you may need to modify some of the    #
-    # code above to compute the gradient.                                       #
-    #############################################################################
-    # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-    pass
-
-    # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-    
     return loss, dW
 
 
@@ -70,32 +58,23 @@ def svm_loss_vectorized(W, X, y, reg):
     """
     loss = 0.0
     dW = np.zeros(W.shape) # initialize the gradient as zero
-
-    #############################################################################
-    # TODO:                                                                     #
-    # Implement a vectorized version of the structured SVM loss, storing the    #
-    # result in loss.                                                           #
-    #############################################################################
-    # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-    pass
-
-    # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-    #############################################################################
-    # TODO:                                                                     #
-    # Implement a vectorized version of the gradient for the structured SVM     #
-    # loss, storing the result in dW.                                           #
-    #                                                                           #
-    # Hint: Instead of computing the gradient from scratch, it may be easier    #
-    # to reuse some of the intermediate values that you used to compute the     #
-    # loss.                                                                     #
-    #############################################################################
-    # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-    pass
-
-    # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+    N = X.shape[0]
+    C = W.shape[1]
+    scores = X.dot(W)
+    y_scores = scores[np.arange(N), y.T].reshape(1,-1)
+    margins = np.maximum(0, scores - y_scores.T + 1)
+    margins[np.arange(N), y.T] = 0
+    loss = np.mean(np.sum(margins, axis=1))
+    
+    binary = margins
+    binary[margins > 0] = 1
+    row_sum = np.sum(binary, axis=1)
+    binary[np.arange(N), y.T] = -row_sum.T
+    dW = X.T.dot(binary)
+    dW /= N
+    # regularization
+    loss += reg * np.sum(W*W)
+    dW += reg*W
 
     return loss, dW
 
