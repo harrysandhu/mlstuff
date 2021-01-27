@@ -5,7 +5,7 @@ from builtins import object
 import numpy as np
 import matplotlib.pyplot as plt
 from past.builtins import xrange
-from . import softmax_loss_vectorized
+from . import softmax_loss_vectorized,softmax_loss_naive
 
 class TwoLayerNet(object):
     """
@@ -80,18 +80,23 @@ class TwoLayerNet(object):
         # shape (N, C).                                                             #
         #############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-        relu = lambda x: np.maximum(0, x)
-        h1 = relu(X.dot(W1) + b1)
-        scores = h1.dot(W2) + b2
+
+        # First layer pre-activation
+        z1 = X.dot(W1) + b1
+
+        # First layer activation
+        a1 = np.maximum(0,z1)
+
+        # Second layer pre-activation
+        z2 = a1.dot(W2) + b2
+
+        scores = z2
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
         # If the targets are not given then jump out, we're done
         if y is None:
             return scores
-
-        # Compute the loss
-        loss = None
         #############################################################################
         # TODO: Finish the forward pass, and compute the loss. This should include  #
         # both the data loss and L2 regularization for W1 and W2. Store the result  #
@@ -99,9 +104,14 @@ class TwoLayerNet(object):
         # classifier loss.                                                          #
         #############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-        
-        loss, dLdW2 = softmax_loss_vectorized(W2, h1, y, reg)
+        exp_scores = np.exp(scores)
+        a2 = exp_scores / np.sum(exp_scores, axis=1, keepdims=True)
+        data_loss = np.sum(-np.log(a2[range(N), y])) / N
+        reg_loss = 0.5 * reg * (np.sum(W1 * W1) + np.sum(W2 * W2))
 
+        loss = data_loss + reg_loss
+
+        # END OF FORWARD PASS ----->/////
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
         # Backward pass: compute gradients
@@ -112,10 +122,23 @@ class TwoLayerNet(object):
         # grads['W1'] should store the gradient on W1, and be a matrix of same size #
         #############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-        dLb1
-        dLdW1
+        dscores = a2
+        dscores[range(N), y] -= 1
+        dscores /= N
 
+        grads['W2'] = np.dot(a1.T, dscores)
+        grads['b2'] = np.sum(dscores, axis=0)
         
+        
+        # relu differentiation
+        dhidden = np.dot(dscores, W2.T)
+        dhidden[z1 <= 0] = 0
+
+        grads['W1'] = np.dot(X.T, dhidden)
+        grads['b1'] = np.sum(dhidden, axis=0)
+
+        grads['W2'] += reg * W2
+        grads['W1'] += reg * W1
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -160,7 +183,9 @@ class TwoLayerNet(object):
             #########################################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-            pass
+            idx = np.random.choice(np.arange(num_train), batch_size, replace=True)
+            X_batch = X[idx]
+            y_batch = y[idx]
 
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -176,7 +201,8 @@ class TwoLayerNet(object):
             #########################################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-            pass
+            for param, grad in self.params.items():
+              self.params[param] -= learning_rate*grad
 
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -221,9 +247,24 @@ class TwoLayerNet(object):
         # TODO: Implement this function; it should be VERY simple!                #
         ###########################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+        W1, b1 = self.params['W1'], self.params['b1']
+        W2, b2 = self.params['W2'], self.params['b2']
+        N, D = X.shape
 
-        pass
+        # Compute the forward pass
+        scores = None
+        #############################################################################
+        # TODO: Perform the forward pass, computing the class scores for the input. #
+        # Store the result in the scores variable, which should be an array of      #
+        # shape (N, C).                                                             #
+        #############################################################################
+        # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
+        # First layer pre-activation
+        z1 = X.dot(self.params['W1']) + self.params['b1']
+        a1 = np.maximum(0, z1)  # pass through ReLU activation function
+        scores = a1.dot(self.params['W2']) + self.params['b2']
+        y_pred = np.argmax(scores, axis=1)
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
         return y_pred

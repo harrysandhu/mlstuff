@@ -73,9 +73,9 @@ def softmax_loss_vectorized(W, X, y, reg):
     f = X.dot(W) # N, C
     f -= np.max(f[n_range, :])
     p = np.zeros_like(f)
-    p[np.arange(N), c_range]  = np.exp(f[np.arange(N), c_range]) / np.sum(np.exp(f[np.arange(N), :]), axis=1) 
-    loss = np.mean(-np.log(p[np.arange(N), y]))
-    p[np.arange(N), y] -= 1
+    p[n_range, c_range]  = np.exp(f[n_range, c_range]) / np.sum(np.exp(f[n_range, :]), axis=1) 
+    loss = np.mean(-np.log(p[n_range, y]))
+    p[n_range, y] -= 1
     dW = X.T.dot(p)
     dW /= N
 
